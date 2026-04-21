@@ -3,7 +3,7 @@
 
   outputs = { self }: {
     overlays.default = final: prev: {
-      framework-plymouth = prev.callPackage ./framework-plymouth.nix {};
+      framework-plymouth = prev.callPackage ./pkgs/framework-plymouth {};
     };
   };
 }

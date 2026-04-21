@@ -2,10 +2,10 @@
   stdenvNoCC,
   fetchFromSourcehut,
   lib,
-  imagemagick
+  imagemagick,
 }:
 
-stdenvNoCC.mkDerivation {
+stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "framework-plymouth";
   version = "0-unstable-2021-12-20";
 
@@ -15,36 +15,40 @@ stdenvNoCC.mkDerivation {
     rev = "b801f5bbf41df1cd3d1edeeda31d476ebf142f67";
     hash = "sha256-TuD+qHQ6+csK33oCYKfWRtpqH6AmYqvZkli0PtFm8+8=";
   };
+  sourceRoot = "${finalAttrs.src.name}/framework";
 
-  sourceRoot = "source/framework";
   nativeBuildInputs = [
     imagemagick
   ];
 
   buildPhase = ''
     runHook preBuild
+
     for image in throbber*.png; do
       [[ -e "$image" ]] || break
       magick "$image" -resize 25% "$image";
     done
-
     sed -i '{
-      8s/3/2/     # decrease title font size from 30 to 20
-      11s/382/8/  # move dialog to .8 of screen
-      13s/382/3/  # move title to .3 of screen
-      15s/5/8/    # move logo to .8 of screen
-      28s/^/UseFirmwareBackground=true\n/  # display uefi logo @ boot
-      31s/^/UseFirmwareBackground=true\n/  # display uefi logo @ shutdown
-      34s/^/UseFirmwareBackground=true\n/  # display uefi logo @ reboot
+      8s/3/2/    # decrease title font size from 30 to 20
+      11s/382/8/ # move dialog to .8 of screen
+      13s/382/3/ # move title to .3 of screen
+      15s/5/8/   # move logo to .8 of screen
+      28s/^/UseFirmwareBackground=true\n/ # display uefi logo @ boot
+      31s/^/UseFirmwareBackground=true\n/ # display uefi logo @ shutdown
+      34s/^/UseFirmwareBackground=true\n/ # display uefi logo @ reboot
     }' framework.plymouth
+
     runHook postBuild
   '';
 
   installPhase = ''
     runHook preInstall
-    mkdir -p "$out"/share/plymouth/themes/framework
-    cp * "$out"/share/plymouth/themes/framework
-    sed -i "s@/usr/@$out/@" "$out"/share/plymouth/themes/framework/framework.plymouth
+
+    mkdir -p $out/share/plymouth/themes/framework
+    cp * $out/share/plymouth/themes/framework
+    substituteInPlace $out/share/plymouth/themes/framework/framework.plymouth \
+      --replace-fail "/usr/" "$out/"
+
     runHook postInstall
   '';
 
@@ -59,4 +63,4 @@ stdenvNoCC.mkDerivation {
     maintainers = [ "j-pap" ];
     platforms = lib.platforms.linux;
   };
-}
+})
